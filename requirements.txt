@@ -1,0 +1,2 @@
+# No third-party dependencies — these scripts use only the Python standard library
+# (urllib, json) so they run anywhere without a package install step.
