@@ -18,6 +18,8 @@ ecommerce/
     03_trend_watch.py                       # multi-source trend/competitor-price synthesis
     04_supplier_risk_screening.py           # domain-scoped compliance/risk screening
     05_competitor_platform_intelligence.py  # knowledge + highlights in one call
+    06_multiplatform_listing_check.py       # where to list a product, and at what price
+    07_import_tariff_compliance.py          # HS code / tariff lookup, government sources only
 ```
 
 ## Setup
@@ -55,7 +57,7 @@ chat_with_search("What are the best noise-cancelling headphones under $300...")
 
 **Client-side** — call Web Search / Contents yourself, assemble results into the
 prompt, call the model separately. Full control over parameters: domain scoping,
-freshness windows, extraction mode (`scenarios/01`, `03`, `04`, `05`).
+freshness windows, extraction mode (`scenarios/01`, `03`, `04`, `05`, `06`, `07`).
 
 ```python
 results = web_search(query, extraction_mode="highlights", include_domains=[...])
@@ -83,3 +85,11 @@ code elsewhere, keep that header.
 - **05 — Competitor platform intelligence**: `knowledge` and `highlights` enabled
   together in a single call — a structured financial record plus the specific news
   passages behind it, synthesized into one strategic brief.
+- **06 — Multi-platform listing check**: a different question from 05 — not "how
+  healthy is this named competitor" but "where should I list this product and at
+  what price," compared across marketplaces in one search.
+- **07 — Import tariff / HS code compliance**: domain-scoped to government trade
+  sites only (`cbp.gov`, `usitc.gov`, `trade.gov`) so the answer is grounded in
+  actual rulings and bulletins, not SEO content — and the prompt explicitly asks
+  the model to flag what the sources don't confirm rather than fill gaps with a
+  guess.
