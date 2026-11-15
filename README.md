@@ -5,7 +5,7 @@ Contents, Knowledge, Highlights) into an LLM-based agent. Each example is a
 real, reproducible scenario — not a hypothetical — with a working script you can
 run against your own API key and model.
 
-This repo is organized by industry vertical: `ecommerce/` and `legal/` so far.
+This repo is organized by industry vertical: `ecommerce/`, `legal/` and `travel/` so far.
 
 ## Structure
 
@@ -27,6 +27,14 @@ legal/
     01_regulatory_qa.py          # cited answers grounded in official regulatory text
     02_court_and_rule_watch.py   # a weekly brief that flags stale items instead of trusting dates
     03_multi_country_check.py    # one comparison table across jurisdictions, gaps flagged not guessed
+
+travel/
+  you_api.py           # same shared helpers + knowledge_records, people_search, save_sample
+  scenarios/
+    01_trip_briefing.py            # weather + FX via knowledge=core, recent notices via highlights
+    02_entry_policy_watch.py       # official domains only, freshness=year, language=ZH-HANS
+    03_multilingual_poi_check.py   # zh/en/ja, country+freshness on/off, measured (no judge model)
+    04_supplier_due_diligence.py   # People Search (/v1/people/search) + Web Search corroboration
 ```
 
 ## Setup
@@ -35,7 +43,7 @@ You need a You.com API key (`YDC_API_KEY`). Get one at [you.com](https://you.com
 
 ```bash
 export YDC_API_KEY=your_key_here
-cd ecommerce   # or legal
+cd travel      # or ecommerce / legal
 python3 scenarios/01_sourcing_agent.py
 ```
 
@@ -115,3 +123,22 @@ code elsewhere, keep that header.
 - **03 — Multi-country check**: one search per jurisdiction, combined into a single
   comparison table. The model is asked to flag — not paper over — jurisdictions
   where the provided sources don't support a confident answer.
+
+## Scenario notes — travel
+
+- **01 — Trip briefing**: three Web Search calls on one endpoint. Weather and the CNY/JPY rate
+  come back as `knowledge=core` records (provider + `as_of`); recent notices use highlights with
+  `country=JP` and `freshness=month`. Weather is returned in °F — convert in the prompt or in code.
+- **02 — Entry-policy watch**: `include_domains` limited to Japanese government / tourism-board sites,
+  `freshness=year`, `language=ZH-HANS`. The prompt requires a "not confirmed" list instead of
+  filling gaps; the live run rejected two retrieved pages that were not about entering Japan.
+- **03 — Multilingual check**: no model in the loop. Prints, per language, the share of results with a
+  page date and within 30 days, with and without `country` + `freshness`. Note `freshness` drops results
+  whose `page_age` is unknown.
+- **04 — Supplier due diligence**: People Search is a standalone endpoint
+  (`POST https://ydc-index.io/v1/people/search`, body `{"query", "count"}`). Profiles carry
+  `authenticity_score`, `consistency_score`, `source_count`, `last_updated_at`; the prompt makes the
+  model report them and list anything the web search did not corroborate. Person records are redacted
+  (`redact_person`) before they are written to `samples/`; `*.json` is git-ignored, so samples are not
+  committed. Do not log or publish person data.
+- Not verified: `knowledge=core` did not return people records in our probes; use People Search directly.
