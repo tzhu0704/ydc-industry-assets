@@ -64,6 +64,11 @@ def _post(url: str, body: dict, headers: dict, retries: int = 4, timeout: int = 
             last_err = e
             if attempt < retries:
                 time.sleep(3 * attempt)
+        except (TimeoutError, urllib.error.URLError) as e:  # read timeouts are retried too
+            print(f"  [{url}] attempt {attempt}/{retries} failed: {type(e).__name__}", file=sys.stderr)
+            last_err = e
+            if attempt < retries:
+                time.sleep(3 * attempt)
     raise last_err
 
 

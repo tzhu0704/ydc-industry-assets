@@ -35,6 +35,11 @@ travel/
     02_entry_policy_watch.py       # official domains only, freshness=year, language=ZH-HANS
     03_multilingual_poi_check.py   # zh/en/ja, country+freshness on/off, measured (no judge model)
     04_supplier_due_diligence.py   # People Search (/v1/people/search) + Web Search corroboration
+    05_itinerary_replan.py         # knowledge forecast + highlights indoor options -> re-ordered plan
+    06_multicurrency_budget.py     # knowledge FX per currency; conversion done in code (fx.py)
+    07_market_intelligence.py      # Trip.com vs Booking: knowledge financial/traffic + highlights news
+  fx.py                # deterministic FX parsing/conversion used by 06
+  tests/test_fx.py     # offline unit tests (no key): python3 -m unittest discover -s tests
 ```
 
 ## Setup
@@ -141,4 +146,14 @@ code elsewhere, keep that header.
   model report them and list anything the web search did not corroborate. Person records are redacted
   (`redact_person`) before they are written to `samples/`; `*.json` is git-ignored, so samples are not
   committed. Do not log or publish person data.
+- **05 — Itinerary re-plan**: forecast from `knowledge=core`, indoor options from highlights with
+  `country=JP` + `freshness=month`. The prompt lets the model move existing items or add only items the
+  retrieved text names, quoting prices/closing days verbatim — an early run cited a source that did not
+  contain the item, and this rule fixed it.
+- **06 — Multi-currency budget**: one `knowledge=core` FX call per currency; `fx.parse_rate` extracts the
+  rate (rejecting the wrong direction / no rate) and the arithmetic is done in code. The model only
+  summarises the finished table.
+- **07 — Market intelligence**: financial (Fiscal.ai, S&P Global), traffic (Semrush) and news for two
+  companies. The prompt forbids comparing figures that differ in period or currency, and requires
+  "date not given" for records with no `as_of` (the Semrush traffic record has none).
 - Not verified: `knowledge=core` did not return people records in our probes; use People Search directly.
