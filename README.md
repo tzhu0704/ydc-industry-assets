@@ -5,7 +5,7 @@ Contents, Knowledge, Highlights) into an LLM-based agent. Each example is a
 real, reproducible scenario — not a hypothetical — with a working script you can
 run against your own API key and model.
 
-This repo is organized by industry vertical: `ecommerce/`, `legal/`, `travel/`, `media/` and `finance/` so far.
+This repo is organized by industry vertical: `ecommerce/`, `legal/`, `travel/`, `media/`, `finance/` and `education/` so far.
 
 ## Industry catalogue
 
@@ -17,7 +17,9 @@ This repo is organized by industry vertical: `ecommerce/`, `legal/`, `travel/`, 
 | Media creation | [`media/`](media) | 7 | Knowledge, Highlights, Contents, domain scoping, freshness, image / video / reverse-image search |
 | Financial services | [`finance/`](finance) | 8 | Knowledge, Highlights, Contents, `site:` operators, freshness, language, People Search |
 
-32 scenarios in total. Each industry folder is self-contained (its own `you_api.py` and `scenarios/`),
+| Online education | [`education/`](education) | 6 | Highlights, domain scoping, Contents, language, image search |
+
+38 scenarios in total. Each industry folder is self-contained (its own `you_api.py` and `scenarios/`),
 so you can copy one folder without the others. Capabilities are read from the scenario source, so the
 table shows what a script calls, not how well it works.
 
@@ -83,6 +85,10 @@ finance/
     08_knowledge_value_check.py    # same queries with and without knowledge=core: coverage, providers, latency
   tests/test_finance.py  # 13 offline unit tests (no key)
 ```
+
+## Online education
+
+See [education/README.md](education/README.md) for six runnable workflows, evidence validation, and live-test boundaries.
 
 ## Setup
 
