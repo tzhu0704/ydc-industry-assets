@@ -7,6 +7,18 @@ run against your own API key and model.
 
 This repo is organized by industry vertical: `ecommerce/`, `legal/` and `travel/` so far.
 
+## Industry catalogue
+
+| Industry | Folder | Scenarios | Capabilities used |
+|---|---|---|---|
+| Cross-border e-commerce | [`ecommerce/`](ecommerce) | 7 | Highlights, Knowledge, domain scoping, freshness, Contents, server-side search |
+| Legal | [`legal/`](legal) | 3 | Highlights, domain scoping, freshness |
+| Travel | [`travel/`](travel) | 7 | Knowledge, Highlights, domain scoping, freshness, country/language, People Search |
+
+17 scenarios in total. Each industry folder is self-contained (its own `you_api.py` and `scenarios/`),
+so you can copy one folder without the others. Capabilities are read from the scenario source, so the
+table shows what a script calls, not how well it works.
+
 ## Structure
 
 ```
