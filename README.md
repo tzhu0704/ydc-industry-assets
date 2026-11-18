@@ -5,7 +5,7 @@ Contents, Knowledge, Highlights) into an LLM-based agent. Each example is a
 real, reproducible scenario — not a hypothetical — with a working script you can
 run against your own API key and model.
 
-This repo is organized by industry vertical: `ecommerce/`, `legal/`, `travel/` and `media/` so far.
+This repo is organized by industry vertical: `ecommerce/`, `legal/`, `travel/`, `media/` and `finance/` so far.
 
 ## Industry catalogue
 
@@ -15,8 +15,9 @@ This repo is organized by industry vertical: `ecommerce/`, `legal/`, `travel/` a
 | Legal | [`legal/`](legal) | 3 | Highlights, domain scoping, freshness |
 | Travel | [`travel/`](travel) | 7 | Knowledge, Highlights, domain scoping, freshness, country/language, People Search |
 | Media creation | [`media/`](media) | 7 | Knowledge, Highlights, Contents, domain scoping, freshness, image / video / reverse-image search |
+| Financial services | [`finance/`](finance) | 8 | Knowledge, Highlights, Contents, `site:` operators, freshness, language, People Search |
 
-24 scenarios in total. Each industry folder is self-contained (its own `you_api.py` and `scenarios/`),
+32 scenarios in total. Each industry folder is self-contained (its own `you_api.py` and `scenarios/`),
 so you can copy one folder without the others. Capabilities are read from the scenario source, so the
 table shows what a script calls, not how well it works.
 
@@ -66,6 +67,21 @@ media/
     06_licensed_source_search.py   # include_domains on open-reuse sources + Contents(html); licence never inferred
     07_image_provenance.py         # reverse image search grouped by source; stock-site triage
   tests/test_media.py  # 13 offline unit tests (no key)
+
+finance/
+  you_api.py           # shared helpers (search, contents, people_search, custom_search, save_sample)
+  finance_utils.py     # pure helpers: date/number/citation/quote checks, Linked Exchange Rate band, language check
+  loop.py              # generate -> check in code -> repair once
+  scenarios/
+    01_regulatory_watch.py         # (site:a OR site:b) + freshness=month; brief checked for dates, citations, Traditional Chinese
+    02_rates_desk.py               # Knowledge records + the HKD band read from HKMA; arithmetic in code
+    03_peer_snapshot.py            # Knowledge stock/revenue records with a currency and period guard
+    04_disclosure_retrieval.py     # site:hkexnews.hk + Contents (full PDF) + figures extracted with verbatim quotes
+    05_enforcement_screening.py    # regulator notices -> actions, each with a quote verified in the source
+    06_policy_qa_bilingual.py      # language=ZH-HANT / EN against official sources, answer checked in code
+    07_decision_makers.py          # People Search by role + exchange-filing check
+    08_knowledge_value_check.py    # same queries with and without knowledge=core: coverage, providers, latency
+  tests/test_finance.py  # 13 offline unit tests (no key)
 ```
 
 ## Setup
@@ -203,3 +219,27 @@ code elsewhere, keep that header.
   decision. Hosts that block fetching (e.g. Wikimedia) return no matches; the script tries the next candidate.
 - `save_sample` strips provider-internal fields from SERP responses. Not built: creator discovery with People Search
   (results mixed in companies and unrelated roles in our tests).
+
+## Scenario notes — financial services
+
+Worked examples use Hong Kong regulators (HKMA, SFC) and the Hong Kong exchange; swap the domains and the questions for any
+other market. Every scenario that asks a model for text checks the result in code before it is shown, and repairs once.
+
+- **01 — Regulatory watch**: `(site:hkma.gov.hk OR site:sfc.hk)` with `freshness=month` returns official-only, in-window results
+  (the script also runs the `include_domains` variant for comparison). The brief must use only dates the search supplied, cite
+  existing sources, cover every recent source and be Traditional Chinese.
+- **02 — Rates desk**: six `knowledge=core` records (FX, US 10Y, HK rate, inflation, GDP) plus the 7.75–7.85 band parsed from an
+  HKMA page. The position inside the band and the distance to the limit are computed in code; numbers in the note must be in the table.
+- **03 — Peer snapshot**: stock overview and latest-quarter revenue records; banks list on different exchanges and report in
+  different currencies, so the prompt keeps each figure in the currency and period its record states.
+- **04 — Filings**: `site:hkexnews.hk` + Contents reads PDFs in full (about 100,000 characters for an annual results announcement);
+  the issuer is identified from the text; four headline figures are extracted and each quote must appear verbatim in the filing.
+- **05 — Enforcement screening**: regulator notices -> actions; every item carries a verbatim quote from the cited notice. The
+  output is a feed for screening, not a clearance: no result for a name does not mean the name is clear.
+- **06 — Bilingual Q&A**: `language=ZH-HANT` and `EN` against official sources; the Traditional Chinese answer is checked for
+  citations, numbers from the sources and absence of Simplified characters.
+- **07 — Decision makers**: `POST /v1/people/search` by role, with trust signals; companies are checked against exchange filings.
+  Names and bios are redacted before anything is written to `samples/`.
+- **08 — What Knowledge adds**: ten queries with and without `knowledge=core`; latency is the API's `metadata.latency` for one run.
+- `freshness` with `site:` operators in the query gives official-only and strictly recent results in one request; use
+  `include_domains` for a fixed allow-list and add a `site:` operator when recency must be exact too.
