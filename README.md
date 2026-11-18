@@ -5,7 +5,7 @@ Contents, Knowledge, Highlights) into an LLM-based agent. Each example is a
 real, reproducible scenario — not a hypothetical — with a working script you can
 run against your own API key and model.
 
-This repo is organized by industry vertical: `ecommerce/`, `legal/` and `travel/` so far.
+This repo is organized by industry vertical: `ecommerce/`, `legal/`, `travel/` and `media/` so far.
 
 ## Industry catalogue
 
@@ -14,8 +14,9 @@ This repo is organized by industry vertical: `ecommerce/`, `legal/` and `travel/
 | Cross-border e-commerce | [`ecommerce/`](ecommerce) | 7 | Highlights, Knowledge, domain scoping, freshness, Contents, server-side search |
 | Legal | [`legal/`](legal) | 3 | Highlights, domain scoping, freshness |
 | Travel | [`travel/`](travel) | 7 | Knowledge, Highlights, domain scoping, freshness, country/language, People Search |
+| Media creation | [`media/`](media) | 7 | Knowledge, Highlights, Contents, domain scoping, freshness, image / video / reverse-image search |
 
-17 scenarios in total. Each industry folder is self-contained (its own `you_api.py` and `scenarios/`),
+24 scenarios in total. Each industry folder is self-contained (its own `you_api.py` and `scenarios/`),
 so you can copy one folder without the others. Capabilities are read from the scenario source, so the
 table shows what a script calls, not how well it works.
 
@@ -52,6 +53,19 @@ travel/
     07_market_intelligence.py      # Trip.com vs Booking: knowledge financial/traffic + highlights news
   fx.py                # deterministic FX parsing/conversion used by 06
   tests/test_fx.py     # offline unit tests (no key): python3 -m unittest discover -s tests
+
+media/
+  you_api.py           # shared helpers + custom_search (image / video / reverse-image) and clean_serp
+  media_utils.py       # pure helpers: stock detection, media-URL filters, number checks, shot-script validator
+  scenarios/
+    01_shot_script.py              # shot (camera-movement) script from live facts, validated in code
+    02_trend_radar.py              # freshness=week + Contents; audio ids extracted by code
+    03_data_card_script.py         # knowledge numbers; every number in the voice-over checked in code
+    04_reference_image_search.py   # text -> image, measured (no model)
+    05_reference_video_search.py   # text -> video, measured (no model)
+    06_licensed_source_search.py   # include_domains on open-reuse sources + Contents(html); licence never inferred
+    07_image_provenance.py         # reverse image search grouped by source; stock-site triage
+  tests/test_media.py  # 13 offline unit tests (no key)
 ```
 
 ## Setup
@@ -169,3 +183,23 @@ code elsewhere, keep that header.
   companies. The prompt forbids comparing figures that differ in period or currency, and requires
   "date not given" for records with no `as_of` (the Semrush traffic record has none).
 - Not verified: `knowledge=core` did not return people records in our probes; use People Search directly.
+
+## Scenario notes — media creation
+
+- **01 — Shot script**: Knowledge supplies sunset time and forecast, Highlights supplies what is open or closed now,
+  and a drone-rules search is limited to official domains. The model returns a JSON shot list; code checks the
+  camera-move vocabulary, that durations sum to the target, that every cited source id exists, that a drone shot
+  cites a drone-rules source, and that the shoot window equals the golden-hour window computed from the sourced
+  sunset time. A failing script is sent back once. The checks are structural: they do not prove a source supports
+  a sentence.
+- **02 — Trend radar**: `freshness=week` plus Contents; Instagram Reels audio ids are counted by code. Third-party lists.
+- **03 — Data card**: `knowledge=core` records; code checks every number in the voice-over/on-screen text appears in
+  the records, and that on-screen numbers also appear as digits in the voice-over.
+- **04 / 05 — Reference image / video**: `GET /v1/custom/s/search?engine=google_images|google_videos`. No model; the
+  script measures on-topic (key-term proxy), direct image URLs, distinct sources/platforms and stock-site share.
+- **06 — Licence-aware retrieval**: `include_domains` on open-reuse sources, Contents as HTML for complete media URLs.
+  Licence is always reported "not determined": wiki pages carry boilerplate licence text about the page, not the image.
+- **07 — Image provenance**: `engine=google_lens` visual matches grouped by source; a triage signal, not a licence
+  decision. Hosts that block fetching (e.g. Wikimedia) return no matches; the script tries the next candidate.
+- `save_sample` strips provider-internal fields from SERP responses. Not built: creator discovery with People Search
+  (results mixed in companies and unrelated roles in our tests).
